@@ -22,3 +22,28 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Laravel standard .gitignore
+
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+.env
+.env.backup
+.phpunit.result.cache
+
+# Laravel 11/12 cache files
+/bootstrap/cache/*.php
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor files
+.vscode
+.idea
+*.code-workspace
