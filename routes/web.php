@@ -26,7 +26,7 @@ use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\WardenAuthController;
 use App\Http\Controllers\Warden\WardenDashboardController;
 use App\Http\Controllers\Warden\StudentController as WardenStudentController;
-use App\Http\Controllers\WardenFeeController;
+use App\Http\Controllers\Warden\WardenFeeController;
 use App\Http\Controllers\Warden\GatePassController;
 
 /*
@@ -41,13 +41,18 @@ Route::get('/', fn () => view('welcome'))->name('home');
 | ADMIN AUTH
 |--------------------------------------------------------------------------
 */
+
+// Admin login page
 Route::get('/login', fn () => view('auth.login'))->name('login');
 
+// Admin login submit
 Route::post('/login', function (Request $request) {
 
+    // logout other roles
     Auth::guard('warden')->logout();
     Auth::guard('student')->logout();
 
+    // clean old session
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
@@ -61,9 +66,13 @@ Route::post('/login', function (Request $request) {
         return redirect()->route('dashboard');
     }
 
-    return back()->withErrors(['email' => 'Invalid admin credentials']);
+    return back()->withErrors([
+        'email' => 'Invalid admin credentials'
+    ]);
+
 })->name('login.submit');
 
+// Admin logout
 Route::post('/logout', function (Request $request) {
     Auth::guard('web')->logout();
     $request->session()->invalidate();
@@ -78,9 +87,8 @@ Route::post('/logout', function (Request $request) {
 */
 Route::middleware('auth:web')->group(function () {
 
-    Route::get('/dashboard',
-        [DashboardController::class, 'index']
-    )->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     Route::resource('students', AdminStudentController::class);
     Route::resource('rooms', RoomController::class);
@@ -109,9 +117,11 @@ Route::middleware('auth:web')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| STUDENT AUTH + PANEL
+| STUDENT AUTH
 |--------------------------------------------------------------------------
 */
+
+// Student login
 Route::get('/student/login',
     [StudentAuthController::class, 'showLogin']
 )->name('student.login');
@@ -124,6 +134,11 @@ Route::post('/student/logout',
     [StudentAuthController::class, 'logout']
 )->name('student.logout');
 
+/*
+|--------------------------------------------------------------------------
+| STUDENT PANEL
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth:student')->group(function () {
 
     Route::get('/student/dashboard',
@@ -153,24 +168,27 @@ Route::middleware('auth:student')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| WARDEN AUTH
+| WARDEN AUTH (PUBLIC)
 |--------------------------------------------------------------------------
 */
-Route::get('/warden/login',
-    [WardenAuthController::class, 'showLogin']
-)->name('warden.login');
+Route::prefix('warden')->group(function () {
 
-Route::post('/warden/login',
-    [WardenAuthController::class, 'login']
-)->name('warden.login.submit');
+    Route::get('/login',
+        [WardenAuthController::class, 'showLogin']
+    )->name('warden.login');
 
-Route::post('/warden/logout',
-    [WardenAuthController::class, 'logout']
-)->name('warden.logout');
+    Route::post('/login',
+        [WardenAuthController::class, 'login']
+    )->name('warden.login.submit');
+
+    Route::post('/logout',
+        [WardenAuthController::class, 'logout']
+    )->name('warden.logout');
+});
 
 /*
 |--------------------------------------------------------------------------
-| WARDEN PANEL
+| WARDEN PANEL (PROTECTED)
 |--------------------------------------------------------------------------
 */
 Route::prefix('warden')
@@ -178,12 +196,10 @@ Route::prefix('warden')
     ->name('warden.')
     ->group(function () {
 
-        // ✅ DASHBOARD
         Route::get('/dashboard',
             [WardenDashboardController::class, 'index']
         )->name('dashboard');
 
-        // ✅ STUDENTS
         Route::get('/students',
             [WardenStudentController::class, 'index']
         )->name('students.index');
@@ -204,7 +220,6 @@ Route::prefix('warden')
             [RoomMovementController::class, 'in']
         )->name('students.in');
 
-        // ✅ FEES
         Route::get('/fees',
             [WardenFeeController::class, 'index']
         )->name('fees.index');
@@ -213,7 +228,6 @@ Route::prefix('warden')
             [WardenFeeController::class, 'show']
         )->name('fees.show');
 
-        // ✅ GATE PASS (SEPARATE MODULE)
         Route::get('/gate-passes',
             [GatePassController::class, 'index']
         )->name('gatepasses.index');

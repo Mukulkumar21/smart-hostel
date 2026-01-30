@@ -32,7 +32,8 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login.submit') }}">
+                {{-- ✅ IMPORTANT FIX HERE --}}
+                <form method="POST" action="{{ route('login') }}">
                     @csrf
 
                     <div class="mb-3">
@@ -63,7 +64,7 @@
                 <hr>
 
                 <p class="text-center text-muted mb-0">
-                    Smart Hostel Management System
+                    Smart Hostel
                 </p>
 
             </div>

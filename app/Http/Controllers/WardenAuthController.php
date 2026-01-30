@@ -7,44 +7,59 @@ use Illuminate\Support\Facades\Auth;
 
 class WardenAuthController extends Controller
 {
-    // =========================
-    // SHOW LOGIN FORM
-    // =========================
+    /**
+     * =========================
+     * SHOW WARDEN LOGIN FORM
+     * =========================
+     */
     public function showLogin()
     {
+        // ✅ CORRECT VIEW PATH
         return view('warden.auth.login');
     }
 
-    // =========================
-    // LOGIN
-    // =========================
+    /**
+     * =========================
+     * HANDLE WARDEN LOGIN
+     * =========================
+     */
     public function login(Request $request)
     {
+        // ✅ Validate input
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email'    => 'required|email',
+            'password' => 'required',
         ]);
 
+        // ✅ Logout other guards only
+        Auth::guard('web')->logout();
+        Auth::guard('student')->logout();
+
+        // ✅ Attempt warden login
         if (Auth::guard('warden')->attempt($credentials)) {
+
+            // 🔥 Fixes 419 Page Expired
             $request->session()->regenerate();
 
-            // ✅ SUCCESS → DASHBOARD
             return redirect()->route('warden.dashboard');
         }
 
-        // ❌ FAIL
+        // ❌ Login failed
         return back()->withErrors([
-            'email' => 'Invalid email or password',
-        ]);
+            'email' => 'Invalid warden credentials',
+        ])->withInput($request->only('email'));
     }
 
-    // =========================
-    // LOGOUT
-    // =========================
+    /**
+     * =========================
+     * LOGOUT WARDEN
+     * =========================
+     */
     public function logout(Request $request)
     {
         Auth::guard('warden')->logout();
 
+        // ✅ Safe cleanup
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

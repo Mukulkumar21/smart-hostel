@@ -5,39 +5,54 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class StudentAuthController extends Controller
+class WardenAuthController extends Controller
 {
-    // Show student login form
+    /**
+     * SHOW WARDEN LOGIN PAGE
+     */
     public function showLogin()
     {
-        return view('student.auth.login');
+        return view('warden.auth.login');
     }
 
-    // Student login
+    /**
+     * HANDLE WARDEN LOGIN
+     */
     public function login(Request $request)
     {
+        // ✅ Validate input
         $credentials = $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
         ]);
 
-        if (Auth::guard('student')->attempt($credentials)) {
+        // ✅ Logout other guards (NO session invalidate here)
+        Auth::guard('web')->logout();
+        Auth::guard('student')->logout();
+
+        // ✅ Attempt login
+        if (Auth::guard('warden')->attempt($credentials)) {
+            // 🔥 fixes 419
             $request->session()->regenerate();
-            return redirect()->route('student.dashboard');
+
+            return redirect()->route('warden.dashboard');
         }
 
         return back()->withErrors([
-            'email' => 'Invalid student credentials',
-        ]);
+            'email' => 'Invalid warden credentials',
+        ])->withInput($request->only('email'));
     }
 
-    // Student logout
+    /**
+     * LOGOUT WARDEN
+     */
     public function logout(Request $request)
     {
-        Auth::guard('student')->logout();
+        Auth::guard('warden')->logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('student.login');
+        return redirect()->route('warden.login');
     }
 }
