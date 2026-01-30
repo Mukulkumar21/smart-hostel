@@ -1,14 +1,10 @@
 FROM php:8.2-cli
 
-# System dependencies (FIXED)
+# Basic system deps (SAFE)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_sqlite \
+    && docker-php-ext-install pdo pdo_sqlite \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -18,10 +14,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-# IMPORTANT: no artisan scripts during build
+# Composer install (NO artisan scripts)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# SQLite database file
+# SQLite DB file
 RUN mkdir -p database && touch database/database.sqlite
 
 EXPOSE 10000
