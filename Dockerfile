@@ -1,29 +1,39 @@
-FROM php:8.2-cli-alpine
+# Base image
+FROM php:8.2-apache
 
-# System deps
-RUN apk add --no-cache \
+# System dependencies
+RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    sqlite \
-    sqlite-dev
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    curl
 
-# Enable PHP extensions
-RUN docker-php-ext-install pdo pdo_sqlite
+# PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
 
-# Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Enable Apache rewrite
+RUN a2enmod rewrite
 
-WORKDIR /app
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy project
 COPY . .
 
-# Composer install (NO scripts)
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# SQLite DB
-RUN mkdir -p database && touch database/database.sqlite
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-EXPOSE 10000
+# Permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
-CMD php artisan migrate --force \
- && php artisan storage:link \
- && php -S 0.0.0.0:10000 -t public
+# Apache config
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+
+EXPOSE 80
