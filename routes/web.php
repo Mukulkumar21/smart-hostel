@@ -29,6 +29,11 @@ use App\Http\Controllers\Warden\StudentController as WardenStudentController;
 use App\Http\Controllers\Warden\WardenFeeController;
 use App\Http\Controllers\Warden\GatePassController;
 
+
+Route::get('/', function () {
+    return 'Smart Hostel is LIVE 🚀';
+});
+
 /*
 |--------------------------------------------------------------------------
 | HOME
